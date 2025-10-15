@@ -1,17 +1,34 @@
 // Browse page with filter sidebar and shelter grid
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
 import { FilterSidebar } from '../components/FilterSidebar';
 import { ShelterCard } from '../components/ShelterCard';
-import { mockShelters } from '../data/mockShelters';
 import { useFilters } from '../hooks/useFilters';
+import { shelterService, ShelterData } from '../services/shelterService';
 
 export const Browse: React.FC = () => {
   const [searchParams] = useSearchParams();
-  const { filters, setFilters, filteredShelters } = useFilters(mockShelters);
+  const [shelters, setShelters] = useState<ShelterData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { filters, setFilters, filteredShelters } = useFilters(shelters);
+
+  useEffect(() => {
+    const loadShelters = async () => {
+      try {
+        const data = await shelterService.getAllPublishedShelters();
+        setShelters(data);
+      } catch (error) {
+        console.error('Error loading shelters:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadShelters();
+  }, []);
 
   useEffect(() => {
     const locationParam = searchParams.get('location');
@@ -72,7 +89,11 @@ export const Browse: React.FC = () => {
           </motion.div>
 
           <div className="flex-1">
-            {filteredShelters.length > 0 ? (
+            {isLoading ? (
+              <div className="text-center py-16">
+                <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-neutral-900"></div>
+              </div>
+            ) : filteredShelters.length > 0 ? (
               <motion.div
                 variants={container}
                 initial="hidden"

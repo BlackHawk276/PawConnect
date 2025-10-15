@@ -1,11 +1,27 @@
 // Section displaying featured shelters in a responsive grid layout
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { ShelterCard } from './ShelterCard';
-import { mockShelters } from '../data/mockShelters';
+import { shelterService, ShelterData } from '../services/shelterService';
 
 export const FeaturedShelters: React.FC = () => {
-  const featuredShelters = mockShelters.slice(0, 3);
+  const [featuredShelters, setFeaturedShelters] = useState<ShelterData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadShelters = async () => {
+      try {
+        const data = await shelterService.getAllPublishedShelters();
+        setFeaturedShelters(data.slice(0, 3));
+      } catch (error) {
+        console.error('Error loading shelters:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadShelters();
+  }, []);
 
   const container = {
     hidden: { opacity: 0 },
@@ -40,19 +56,25 @@ export const FeaturedShelters: React.FC = () => {
           </p>
         </motion.div>
 
-        <motion.div
-          variants={container}
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: true }}
-          className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8"
-        >
-          {featuredShelters.map(shelter => (
-            <motion.div key={shelter.id} variants={item}>
-              <ShelterCard shelter={shelter} />
-            </motion.div>
-          ))}
-        </motion.div>
+        {isLoading ? (
+          <div className="text-center py-16">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-neutral-900"></div>
+          </div>
+        ) : (
+          <motion.div
+            variants={container}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true }}
+            className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8"
+          >
+            {featuredShelters.map(shelter => (
+              <motion.div key={shelter.id} variants={item}>
+                <ShelterCard shelter={shelter} />
+              </motion.div>
+            ))}
+          </motion.div>
+        )}
       </div>
     </section>
   );

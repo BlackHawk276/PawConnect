@@ -1,9 +1,9 @@
 // Custom hook for managing shelter filtering logic
 import { useState, useMemo } from 'react';
-import { Shelter } from '../data/mockShelters';
+import { ShelterData } from '../services/shelterService';
 import { FilterState } from '../components/FilterSidebar';
 
-export const useFilters = (shelters: Shelter[]) => {
+export const useFilters = (shelters: ShelterData[]) => {
   const [filters, setFilters] = useState<FilterState>({
     searchQuery: '',
     state: 'All States',

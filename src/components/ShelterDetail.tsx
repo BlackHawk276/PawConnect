@@ -2,11 +2,11 @@
 import React from 'react';
 import { MapPin, Phone, Mail, Globe, Calendar, CheckCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { Shelter } from '../data/mockShelters';
+import { ShelterData } from '../services/shelterService';
 import { Button } from './Button';
 
 interface ShelterDetailProps {
-  shelter: Shelter;
+  shelter: ShelterData;
 }
 
 export const ShelterDetail: React.FC<ShelterDetailProps> = ({ shelter }) => {

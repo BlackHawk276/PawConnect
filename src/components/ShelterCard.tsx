@@ -3,10 +3,10 @@ import React from 'react';
 import { MapPin, CheckCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Shelter } from '../data/mockShelters';
+import { ShelterData } from '../services/shelterService';
 
 interface ShelterCardProps {
-  shelter: Shelter;
+  shelter: ShelterData;
   showVerifiedBadge?: boolean;
   grayscale?: boolean;
 }

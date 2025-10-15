@@ -1,17 +1,49 @@
 // Individual shelter detail page with back navigation
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
 import { ShelterDetail } from '../components/ShelterDetail';
-import { mockShelters } from '../data/mockShelters';
+import { shelterService, ShelterData } from '../services/shelterService';
 
 export const ShelterDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [shelter, setShelter] = useState<ShelterData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const shelter = mockShelters.find(s => s.id === id);
+  useEffect(() => {
+    const loadShelter = async () => {
+      if (!id) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const data = await shelterService.getShelterById(id);
+        setShelter(data);
+      } catch (error) {
+        console.error('Error loading shelter:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadShelter();
+  }, [id]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-white">
+        <Navbar />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-neutral-900"></div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   if (!shelter) {
     return (

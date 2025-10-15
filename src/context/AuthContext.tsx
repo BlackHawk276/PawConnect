@@ -1,126 +1,248 @@
-// Authentication context provider with mock user data and auth methods
+// Authentication context provider using Supabase auth with role-based access
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { AuthContextType, AuthUser, UserRole, SignupData, ShelterRegistrationData } from '../types/auth';
+import { AuthContextType, AuthUser, UserRole, SignupData, ShelterRegistrationData, User, ShelterUser, Admin } from '../types/auth';
+import { supabase } from '../lib/supabase';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-const MOCK_USERS = {
-  user: {
-    id: 'user-1',
-    email: 'user@example.com',
-    password: 'password123',
-    firstName: 'John',
-    lastName: 'Doe',
-    phone: '+91 98765 43210',
-    city: 'Mumbai',
-    state: 'Maharashtra',
-    role: 'user' as const
-  },
-  shelter: {
-    id: 'shelter-1',
-    email: 'shelter@example.com',
-    password: 'password123',
-    name: 'Mumbai Street Dogs Care',
-    phone: '+91 98765 43211',
-    city: 'Mumbai',
-    state: 'Maharashtra',
-    description: 'Rescuing and rehabilitating street dogs in Mumbai since 2015.',
-    verificationStatus: 'approved' as const,
-    isPublished: true,
-    role: 'shelter' as const,
-    themeColor: '#4F46E5',
-    establishedYear: 2015
-  },
-  admin: {
-    id: 'admin-1',
-    email: 'admin@pawconnect.org',
-    password: 'admin123',
-    firstName: 'Admin',
-    lastName: 'User',
-    role: 'admin' as const
-  }
-};
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('pawconnect_user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-    setIsLoading(false);
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      (async () => {
+        if (session?.user) {
+          await loadUserProfile(session.user.id);
+        }
+        setIsLoading(false);
+      })();
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      (async () => {
+        if (session?.user) {
+          await loadUserProfile(session.user.id);
+        } else {
+          setUser(null);
+        }
+      })();
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
+
+  const loadUserProfile = async (userId: string) => {
+    try {
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (profileError) throw profileError;
+      if (!profile) return;
+
+      if (profile.role === 'user') {
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', userId)
+          .maybeSingle();
+
+        if (userError) throw userError;
+        if (userData) {
+          const authUser: User = {
+            id: profile.id,
+            email: profile.email,
+            firstName: userData.first_name,
+            lastName: userData.last_name,
+            phone: userData.phone || undefined,
+            city: userData.city || undefined,
+            state: userData.state || undefined,
+            role: 'user'
+          };
+          setUser(authUser);
+        }
+      } else if (profile.role === 'shelter') {
+        const { data: shelterData, error: shelterError } = await supabase
+          .from('shelters')
+          .select('*')
+          .eq('id', userId)
+          .maybeSingle();
+
+        if (shelterError) throw shelterError;
+        if (shelterData) {
+          const authUser: ShelterUser = {
+            id: profile.id,
+            email: profile.email,
+            name: shelterData.name,
+            phone: shelterData.phone,
+            city: shelterData.city,
+            state: shelterData.state,
+            description: shelterData.description || undefined,
+            verificationStatus: shelterData.verification_status,
+            isPublished: shelterData.is_published,
+            role: 'shelter',
+            themeColor: shelterData.theme_color || undefined,
+            logoUrl: shelterData.logo_url || undefined,
+            coverImageUrl: shelterData.cover_image_url || undefined,
+            website: shelterData.website || undefined,
+            registrationNumber: shelterData.registration_number || undefined,
+            establishedYear: shelterData.established_year || undefined
+          };
+          setUser(authUser);
+        }
+      } else if (profile.role === 'admin') {
+        const { data: adminData, error: adminError } = await supabase
+          .from('admins')
+          .select('*')
+          .eq('id', userId)
+          .maybeSingle();
+
+        if (adminError) throw adminError;
+        if (adminData) {
+          const authUser: Admin = {
+            id: profile.id,
+            email: profile.email,
+            firstName: adminData.first_name,
+            lastName: adminData.last_name,
+            role: 'admin'
+          };
+          setUser(authUser);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading user profile:', error);
+    }
+  };
 
   const login = async (email: string, password: string, role: UserRole) => {
     setIsLoading(true);
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
 
-    await new Promise(resolve => setTimeout(resolve, 500));
+      if (error) throw error;
+      if (!data.user) throw new Error('No user returned');
 
-    const mockUser = MOCK_USERS[role];
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', data.user.id)
+        .maybeSingle();
 
-    if (mockUser.email === email && mockUser.password === password) {
-      const { password: _, ...userWithoutPassword } = mockUser;
-      setUser(userWithoutPassword as AuthUser);
-      localStorage.setItem('pawconnect_user', JSON.stringify(userWithoutPassword));
-    } else {
-      throw new Error('Invalid credentials');
+      if (profile?.role !== role) {
+        await supabase.auth.signOut();
+        throw new Error('Invalid credentials for this user type');
+      }
+
+      await loadUserProfile(data.user.id);
+    } catch (error) {
+      throw error;
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await supabase.auth.signOut();
     setUser(null);
-    localStorage.removeItem('pawconnect_user');
   };
 
   const signup = async (data: SignupData) => {
     setIsLoading(true);
+    try {
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password
+      });
 
-    await new Promise(resolve => setTimeout(resolve, 500));
+      if (authError) throw authError;
+      if (!authData.user) throw new Error('No user returned');
 
-    const newUser: AuthUser = {
-      id: `user-${Date.now()}`,
-      email: data.email,
-      firstName: data.firstName,
-      lastName: data.lastName,
-      phone: data.phone,
-      city: data.city,
-      state: data.state,
-      role: 'user'
-    };
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+          id: authData.user.id,
+          email: data.email,
+          role: 'user'
+        });
 
-    setUser(newUser);
-    localStorage.setItem('pawconnect_user', JSON.stringify(newUser));
-    setIsLoading(false);
+      if (profileError) throw profileError;
+
+      const { error: userError } = await supabase
+        .from('users')
+        .insert({
+          id: authData.user.id,
+          first_name: data.firstName,
+          last_name: data.lastName,
+          phone: data.phone || null,
+          city: data.city || null,
+          state: data.state || null
+        });
+
+      if (userError) throw userError;
+
+      await loadUserProfile(authData.user.id);
+    } catch (error) {
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const registerShelter = async (data: ShelterRegistrationData) => {
     setIsLoading(true);
+    try {
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password
+      });
 
-    await new Promise(resolve => setTimeout(resolve, 1000));
+      if (authError) throw authError;
+      if (!authData.user) throw new Error('No user returned');
 
-    const newShelter: AuthUser = {
-      id: `shelter-${Date.now()}`,
-      email: data.email,
-      name: data.name,
-      phone: data.phone,
-      city: data.city,
-      state: data.state,
-      description: data.description,
-      verificationStatus: 'pending',
-      isPublished: false,
-      role: 'shelter',
-      website: data.website,
-      registrationNumber: data.registrationNumber,
-      establishedYear: data.establishedYear
-    };
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+          id: authData.user.id,
+          email: data.email,
+          role: 'shelter'
+        });
 
-    setUser(newShelter);
-    localStorage.setItem('pawconnect_user', JSON.stringify(newShelter));
-    setIsLoading(false);
+      if (profileError) throw profileError;
+
+      const { error: shelterError } = await supabase
+        .from('shelters')
+        .insert({
+          id: authData.user.id,
+          name: data.name,
+          phone: data.phone,
+          address: data.address,
+          city: data.city,
+          state: data.state,
+          postal_code: data.postalCode,
+          description: data.description,
+          website: data.website || null,
+          registration_number: data.registrationNumber || null,
+          established_year: data.establishedYear || null,
+          verification_status: 'pending',
+          is_published: false
+        });
+
+      if (shelterError) throw shelterError;
+
+      await loadUserProfile(authData.user.id);
+    } catch (error) {
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
