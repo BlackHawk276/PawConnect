@@ -74,15 +74,6 @@ export const Login: React.FC = () => {
             ))}
           </div>
 
-          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-sm text-blue-900 font-medium mb-2">Demo Credentials:</p>
-            <p className="text-xs text-blue-700 font-mono">
-              {activeTab === 'user' && 'user@example.com / password123'}
-              {activeTab === 'shelter' && 'shelter@example.com / password123'}
-              {activeTab === 'admin' && 'admin@pawconnect.org / admin123'}
-            </p>
-          </div>
-
           {error && (
             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3">
               <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />

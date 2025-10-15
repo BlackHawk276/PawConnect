@@ -4,7 +4,7 @@ import { DashboardLayout } from '../components/DashboardLayout';
 import { ShelterDetail } from '../components/ShelterDetail';
 import { useAuth } from '../context/AuthContext';
 import { ShelterUser } from '../types/auth';
-import { Shelter } from '../data/mockShelters';
+import { Shelter } from '../types/shelter';
 
 export const ShelterPreview: React.FC = () => {
   const { user } = useAuth();
