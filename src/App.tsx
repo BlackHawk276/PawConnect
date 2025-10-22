@@ -8,7 +8,8 @@ import { Home } from './pages/Home';
 import { Browse } from './pages/Browse';
 import { ShelterDetailPage } from './pages/ShelterDetailPage';
 import { Login } from './pages/Login';
-import { Signup } from './pages/Signup';
+import { RoleSelection } from './pages/RoleSelection';
+import { VolunteerSignup } from './pages/VolunteerSignup';
 import { ShelterRegister } from './pages/ShelterRegister';
 
 import { UserDashboard } from './pages/UserDashboard';
@@ -30,7 +31,8 @@ function App() {
           <Route path="/shelters" element={<Browse />} />
           <Route path="/shelter/:id" element={<ShelterDetailPage />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
+          <Route path="/signup" element={<RoleSelection />} />
+          <Route path="/signup/volunteer" element={<VolunteerSignup />} />
           <Route path="/shelter/register" element={<ShelterRegister />} />
 
           <Route

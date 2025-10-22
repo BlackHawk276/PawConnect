@@ -125,23 +125,12 @@ export const Login: React.FC = () => {
             </button>
           </form>
 
-          {activeTab === 'user' && (
+          {(activeTab === 'user' || activeTab === 'shelter') && (
             <div className="mt-6 text-center">
               <p className="text-neutral-600">
                 Don't have an account?{' '}
                 <Link to="/signup" className="text-black font-semibold hover:underline">
                   Sign up
-                </Link>
-              </p>
-            </div>
-          )}
-
-          {activeTab === 'shelter' && (
-            <div className="mt-6 text-center">
-              <p className="text-neutral-600">
-                New shelter?{' '}
-                <Link to="/shelter/register" className="text-black font-semibold hover:underline">
-                  Register here
                 </Link>
               </p>
             </div>

@@ -1,10 +1,10 @@
-// User signup page with profile information form
+// Volunteer signup page - single page registration form for volunteers
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Heart } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
-export const Signup: React.FC = () => {
+export const VolunteerSignup: React.FC = () => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -69,8 +69,8 @@ export const Signup: React.FC = () => {
             </div>
             <span className="text-3xl font-bold text-neutral-900">PawConnect</span>
           </Link>
-          <h2 className="text-2xl font-bold text-neutral-900 mb-2">Create Account</h2>
-          <p className="text-neutral-600">Join our community today</p>
+          <h2 className="text-2xl font-bold text-neutral-900 mb-2">Join as a Volunteer</h2>
+          <p className="text-neutral-600">Create your volunteer account</p>
         </div>
 
         <div className="bg-white rounded-2xl shadow-xl p-8">
@@ -84,7 +84,7 @@ export const Signup: React.FC = () => {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-semibold text-neutral-900 mb-2">
-                  First Name
+                  First Name *
                 </label>
                 <input
                   type="text"
@@ -97,7 +97,7 @@ export const Signup: React.FC = () => {
               </div>
               <div>
                 <label className="block text-sm font-semibold text-neutral-900 mb-2">
-                  Last Name
+                  Last Name *
                 </label>
                 <input
                   type="text"
@@ -112,7 +112,7 @@ export const Signup: React.FC = () => {
 
             <div>
               <label className="block text-sm font-semibold text-neutral-900 mb-2">
-                Email
+                Email *
               </label>
               <input
                 type="email"
@@ -126,7 +126,7 @@ export const Signup: React.FC = () => {
 
             <div>
               <label className="block text-sm font-semibold text-neutral-900 mb-2">
-                Password
+                Password *
               </label>
               <input
                 type="password"
@@ -137,11 +137,12 @@ export const Signup: React.FC = () => {
                 className="w-full px-4 py-3 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
                 placeholder="••••••••"
               />
+              <p className="text-xs text-neutral-500 mt-1">Must be at least 8 characters</p>
             </div>
 
             <div>
               <label className="block text-sm font-semibold text-neutral-900 mb-2">
-                Confirm Password
+                Confirm Password *
               </label>
               <input
                 type="password"
@@ -188,7 +189,7 @@ export const Signup: React.FC = () => {
               disabled={isLoading}
               className="w-full bg-black text-white py-3.5 rounded-lg font-semibold hover:bg-neutral-800 transition-colors shadow-md hover:shadow-lg disabled:opacity-50"
             >
-              {isLoading ? 'Creating Account...' : 'Create Account'}
+              {isLoading ? 'Creating Account...' : 'Create Volunteer Account'}
             </button>
           </form>
 
@@ -203,8 +204,8 @@ export const Signup: React.FC = () => {
         </div>
 
         <div className="mt-6 text-center">
-          <Link to="/" className="text-neutral-600 hover:text-neutral-900 transition-colors">
-            ← Back to Home
+          <Link to="/signup" className="text-neutral-600 hover:text-neutral-900 transition-colors">
+            ← Back to Role Selection
           </Link>
         </div>
       </div>
